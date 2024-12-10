@@ -1,5 +1,10 @@
+.DS_Store
+
 # Compiled class file
 *.class
+
+# SQLite
+*.db
 
 # Log file
 *.log
