@@ -31,10 +31,10 @@ public class AuthService {
 		}
 	}
 
-	public boolean authenticateUser(String username, String password) {
+	public Integer authenticateUser(String username, String password) {
 		try (Connection conn = DatabaseUtils.getConnection();
 				PreparedStatement pstmt = conn
-						.prepareStatement("SELECT password, salt FROM users WHERE username = ?")) {
+						.prepareStatement("SELECT id, password, salt FROM users WHERE username = ?")) {
 
 			pstmt.setString(1, username);
 
@@ -43,13 +43,15 @@ public class AuthService {
 					String storedHash = rs.getString("password");
 					String storedSalt = rs.getString("salt");
 
-					return PasswordUtils.verifyPassword(password, storedHash, storedSalt);
+					if (PasswordUtils.verifyPassword(password, storedHash, storedSalt)) {
+						return rs.getInt("id");
+					}
 				}
-				return false;
+				return null;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return false;
+			return null;
 		}
 	}
 

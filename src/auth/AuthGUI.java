@@ -22,7 +22,9 @@ import javax.swing.SwingUtilities;
 import chat.ChatGUI;
 
 public class AuthGUI extends JFrame {
-    private AuthService authService;
+    private static final long serialVersionUID = 5892128998798020581L;
+    
+	private AuthService authService;
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton loginButton;
@@ -91,8 +93,9 @@ public class AuthGUI extends JFrame {
         }
 
         try {
-            if (authService.authenticateUser(username, password)) {
-                openChatWindow(username);
+        	Integer userId = authService.authenticateUser(username, password);
+            if (userId != null) {
+                openChatWindow(username, userId);
             } else {
                 JOptionPane.showMessageDialog(this, 
                     "Invalid username or password", 
@@ -180,13 +183,10 @@ public class AuthGUI extends JFrame {
         signupDialog.setVisible(true);
     }
 
-    private void openChatWindow(String username) {
-    	// Close the login window
+    private void openChatWindow(String username, int userId) {
         this.dispose();
-
-        // Open the chat window on the Event Dispatch Thread
         SwingUtilities.invokeLater(() -> {
-            ChatGUI chatWindow = new ChatGUI(username);
+            ChatGUI chatWindow = new ChatGUI(username, userId);
             chatWindow.setVisible(true);
         });
     }

@@ -22,4 +22,8 @@ public class Conversation {
 	public boolean isGroupChat() {
 		return isGroupChat;
 	}
+	
+	public void setConversationName(String conversationName) {
+		this.conversationName = conversationName;
+	}
 }

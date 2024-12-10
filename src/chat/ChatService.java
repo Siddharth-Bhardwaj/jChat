@@ -77,16 +77,18 @@ public class ChatService {
 	public List<Message> getConversationMessages(int conversationId) {
 		List<Message> messages = new ArrayList<>();
 
-		String sql = "SELECT m.id, m.sender_id, u.username, m.content, m.timestamp " + "FROM messages m "
-				+ "JOIN users u ON m.sender_id = u.id " + "WHERE m.conversation_id = ? " + "ORDER BY m.timestamp";
+		String sql = "SELECT m.id, m.sender_id, u.username, m.conversation_id, m.content, m.timestamp "
+				+ "FROM messages m " + "JOIN users u ON m.sender_id = u.id " + "WHERE m.conversation_id = ? "
+				+ "ORDER BY m.timestamp";
 
 		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
 			pstmt.setInt(1, conversationId);
 
 			try (ResultSet rs = pstmt.executeQuery()) {
 				while (rs.next()) {
-					Message message = new Message(rs.getInt("id"), rs.getInt("sender_id"), rs.getInt("conversation_id"),
-							rs.getString("content"), rs.getTimestamp("timestamp").toLocalDateTime());
+					Message message = new Message(rs.getInt("id"), rs.getInt("sender_id"), rs.getString("username"),
+							rs.getInt("conversation_id"), rs.getString("content"),
+							rs.getTimestamp("timestamp").toLocalDateTime());
 					messages.add(message);
 				}
 			}
@@ -97,27 +99,20 @@ public class ChatService {
 		}
 	}
 
-	public List<User> searchUsers(String searchTerm) {
-		List<User> users = new ArrayList<>();
-
-		String sql = "SELECT id, username, first_name, last_name FROM users "
-				+ "WHERE username LIKE ? OR first_name LIKE ? OR last_name LIKE ?";
+	public User searchUsers(String searchTerm) {
+		String sql = "SELECT id, username, first_name, last_name FROM users " + "WHERE username = ?";
 
 		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-			String likePattern = "%" + searchTerm + "%";
-			pstmt.setString(1, likePattern);
-			pstmt.setString(2, likePattern);
-			pstmt.setString(3, likePattern);
+			pstmt.setString(1, searchTerm);
 
 			try (ResultSet rs = pstmt.executeQuery()) {
-				while (rs.next()) {
-					User user = new User(rs.getInt("id"), rs.getString("username"), rs.getString("first_name"),
+				if (rs.next()) {
+					return new User(rs.getInt("id"), rs.getString("username"), rs.getString("first_name"),
 							rs.getString("last_name"));
-					users.add(user);
 				}
 			}
 
-			return users;
+			return null;
 		} catch (SQLException e) {
 			throw new RuntimeException("User search failed", e);
 		}
@@ -126,16 +121,29 @@ public class ChatService {
 	public List<Conversation> getUserConversations(int userId) {
 		List<Conversation> conversations = new ArrayList<>();
 
-		String sql = "SELECT c.conversation_id, c.conversation_name, c.is_group_chat " + "FROM conversations c "
-				+ "JOIN user_conversations uc ON c.conversation_id = uc.conversation_id " + "WHERE uc.user_id = ?";
+		String sql = "SELECT c.id, c.conversation_name, c.is_group_chat " + "FROM conversations c "
+				+ "JOIN user_conversations uc ON c.id = uc.conversation_id " + "WHERE uc.user_id = ?";
 
-		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+		String otherUserSql = "SELECT u.id, u.username, u.first_name, u.last_name " + "FROM users u "
+				+ "JOIN user_conversations uc ON u.id = uc.user_id " + "WHERE uc.conversation_id = ? AND u.id != ?";
+
+		try (PreparedStatement pstmt = connection.prepareStatement(sql);
+				PreparedStatement otherUserPstmt = connection.prepareStatement(otherUserSql)) {
 			pstmt.setInt(1, userId);
 
 			try (ResultSet rs = pstmt.executeQuery()) {
 				while (rs.next()) {
-					Conversation conversation = new Conversation(rs.getInt("conversation_id"),
-							rs.getString("conversation_name"), rs.getBoolean("is_group_chat"));
+					Conversation conversation = new Conversation(rs.getInt("id"), rs.getString("conversation_name"),
+							rs.getBoolean("is_group_chat"));
+					if (!conversation.isGroupChat()) {
+						otherUserPstmt.setInt(1, conversation.getConversationId());
+						otherUserPstmt.setInt(2, userId);
+						try (ResultSet otherUserRs = otherUserPstmt.executeQuery()) {
+							if (otherUserRs.next()) {
+								conversation.setConversationName(otherUserRs.getString("username"));
+							}
+						}
+					}
 					conversations.add(conversation);
 				}
 			}
