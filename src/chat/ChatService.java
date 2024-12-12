@@ -46,7 +46,7 @@ public class ChatService {
 		}
 	}
 
-	public void addUserToConversation(int userId, int conversationId) {
+	public boolean addUserToConversation(int userId, int conversationId) {
 		String sql = "INSERT INTO user_conversations (user_id, conversation_id) " + "VALUES (?, ?)";
 
 		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -54,8 +54,9 @@ public class ChatService {
 			pstmt.setInt(2, conversationId);
 
 			pstmt.executeUpdate();
+			return true;
 		} catch (SQLException e) {
-			throw new RuntimeException("Adding user to conversation failed", e);
+			return false;
 		}
 	}
 

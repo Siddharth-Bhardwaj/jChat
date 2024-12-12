@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +38,7 @@ import dto.User;
 
 public class ChatGUI extends JFrame {
 	private static final long serialVersionUID = 639938794175271480L;
-	
+
 	private ChatService chatService;
 	private String currentUserName;
 	private int currentUserId;
@@ -96,7 +97,7 @@ public class ChatGUI extends JFrame {
 		sidePanel.add(buttonPanel, BorderLayout.SOUTH);
 
 		chatDisplayPanel = new JPanel(new CardLayout());
-		
+
 		loadExistingConversations();
 		if (chatListModel.size() > 0) {
 			chatList.setSelectedIndex(0);
@@ -174,9 +175,10 @@ public class ChatGUI extends JFrame {
 
 	private class ChatPanel extends JPanel {
 		private static final long serialVersionUID = 1736199242555770092L;
-		
+
 		private JTextPane chatArea;
 		private JTextField messageField;
+		private JButton addUsersButton;
 		private JButton sendButton;
 		private DefaultStyledDocument doc;
 		private int conversationId;
@@ -200,7 +202,36 @@ public class ChatGUI extends JFrame {
 
 			sendButton.addActionListener(e -> sendMessage());
 			messageField.addActionListener(e -> sendMessage());
-			
+
+			if (isGroupChat) {
+				addUsersButton = new JButton("Add Users");
+				messagePanel.add(addUsersButton, BorderLayout.WEST);
+
+				addUsersButton.addActionListener(e -> {
+					String newUsers = JOptionPane.showInputDialog(ChatGUI.this,
+							"Enter usernames to add (comma separated):");
+					List<String> errorUsers = new ArrayList<>();
+					if (newUsers != null && !newUsers.trim().isEmpty()) {
+						String[] users = newUsers.split(",");
+						for (String user : users) {
+							User newUser = chatService.searchUsers(user.trim());
+							if (newUser != null) {
+								if (!chatService.addUserToConversation(newUser.getUserId(), conversationId)) {
+									errorUsers.add(user);
+								}
+							} else {
+								errorUsers.add(user);
+							}
+						}
+						if (errorUsers.size() > 0) {
+							JOptionPane.showMessageDialog(ChatGUI.this,
+									"Users cannot be added: " + String.join(", ", errorUsers), "Error",
+									JOptionPane.ERROR_MESSAGE);
+						}
+					}
+				});
+			}
+
 			if (messages != null && messages.size() > 0) {
 				for (Message message : messages) {
 					appendMessage(message.getSenderUsername(), message.getContent(), message.getTimestamp());
