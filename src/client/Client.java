@@ -17,7 +17,6 @@ public class Client implements Runnable {
 
 	private User user;
 	private boolean isConnected = false;
-	private Socket socket;
 	private PrintWriter socketOutputWriter;
 	private BufferedReader socketInputReader;
 	private ChatGUI chatWindow;
@@ -28,42 +27,34 @@ public class Client implements Runnable {
 		AuthGUI authGUI = new AuthGUI();
 		authGUI.setVisible(true);
 
-		while (true) {
-			if (!authGUI.isVisible() || !authGUI.isDisplayable()) {
-				if (authGUI.getUser() != null) {
-					user = authGUI.getUser();
-
-					try {
-						socket = new Socket("localhost", 9999);
-						socketOutputWriter = new PrintWriter(socket.getOutputStream(), true);
-						socketOutputWriter.println(user.getUserId() + "," + user.getUsername());
-						socketInputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-						isConnected = true;
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-				break;
+		while (authGUI.isVisible() && authGUI.isDisplayable()) {
+			try {
+				Thread.sleep(100); // Poll less frequently
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				return;
 			}
-			Thread.yield();
 		}
 
-		if (isConnected) {
-			openChatWindow();
-			while (socket.isConnected()) {
-				try {
+		if (authGUI.getUser() != null) {
+			user = authGUI.getUser();
+			try (Socket socket = new Socket("localhost", 9999)) {
+				socketOutputWriter = new PrintWriter(socket.getOutputStream(), true);
+				socketInputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				isConnected = true;
+
+				socketOutputWriter.println(user.getUserId() + "," + user.getUsername());
+				openChatWindow();
+
+				while (socket.isConnected()) {
 					String message = socketInputReader.readLine();
-					if (message == null || message.isEmpty()) {
-						continue;
+					if (message != null && !message.isEmpty()) {
+						String[] messageParts = MessageUtils.parseMessage(message);
+						SwingUtilities.invokeLater(() -> chatWindow.receiveMessage(messageParts));
 					}
-					String[] messageParts = MessageUtils.parseMessage(message);
-					System.out.println("Message received: " + message);
-					chatWindow.receiveMessage(messageParts);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}

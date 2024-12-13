@@ -39,9 +39,7 @@ public class ClientHandler implements Runnable {
 					continue;
 				}
 				String[] messageParts = MessageUtils.parseMessage(message);
-				MessageUtils.getSenderId(messageParts);
 				String senderUsername = MessageUtils.getSenderUserName(messageParts);
-				MessageUtils.getConversationId(messageParts);
 				String messageContent = MessageUtils.getMessageContent(messageParts);
 				List<Integer> conversationMembers = MessageUtils.getConversationMembers(messageParts);
 				System.out.println("Message received: " + messageContent + " from " + senderUsername);

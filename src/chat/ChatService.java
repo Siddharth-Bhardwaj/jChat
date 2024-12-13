@@ -8,8 +8,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import dto.Conversation;
 import dto.Message;
@@ -66,11 +68,11 @@ public class ChatService {
 
 	public void sendMessage(int senderId, String senderUsername, int conversationId, String messageContent) {
 		List<Integer> conversationMembers = getConversationMembers(conversationId);
-		String messageToBeSent = MessageUtils.createMessage(senderId, senderUsername, conversationId,
-				messageContent, LocalDateTime.now(), conversationMembers);
-		
+		String messageToBeSent = MessageUtils.createMessage(senderId, senderUsername, conversationId, messageContent,
+				LocalDateTime.now(), conversationMembers);
+
 		socketOutputWriter.println(messageToBeSent);
-		
+
 		String sql = "INSERT INTO messages (sender_id, conversation_id, content, timestamp) " + "VALUES (?, ?, ?, ?)";
 
 		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -164,7 +166,7 @@ public class ChatService {
 			throw new RuntimeException("Retrieving user conversations failed", e);
 		}
 	}
-	
+
 	private List<Integer> getConversationMembers(int conversationId) {
 		String sql = "SELECT user_id FROM user_conversations WHERE conversation_id = ?";
 		List<Integer> members = new ArrayList<>();
@@ -178,6 +180,26 @@ public class ChatService {
 			throw new RuntimeException("Failed to get conversation members", e);
 		}
 		return members;
+	}
+
+	public Map.Entry<String, Boolean> getConversationName(int currentUserId, int conversationId,
+			String senderUsername) {
+		String sql = "SELECT conversation_name FROM conversations WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+			pstmt.setInt(1, conversationId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				String conversationName = rs.getString("conversation_name");
+				if (conversationName == null || conversationName.isEmpty()) {
+					return new AbstractMap.SimpleEntry<>(senderUsername, false);
+				} else {
+					return new AbstractMap.SimpleEntry<>(conversationName, true);
+				}
+			}
+			return null;
+		} catch (SQLException e) {
+			throw new RuntimeException("Failed to get conversation name", e);
+		}
 	}
 
 }

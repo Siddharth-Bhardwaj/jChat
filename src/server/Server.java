@@ -38,7 +38,7 @@ public class Server implements Runnable {
 			}
 		}
 	}
-	
+
 	public Map<Integer, ClientHandler> getClientHandlers() {
 		return clientHandlers;
 	}

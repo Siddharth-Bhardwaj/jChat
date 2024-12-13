@@ -142,7 +142,7 @@ public class ChatGUI extends JFrame {
 		String targetUser = JOptionPane.showInputDialog(this, "Enter Username to Chat:");
 		if (targetUser != null && !targetUser.trim().isEmpty()) {
 			User user = chatService.searchUsers(targetUser);
-			if (user == null) {
+			if (user == null || user.getUserId() == currentUserId) {
 				JOptionPane.showMessageDialog(this, "User not found", "Error", JOptionPane.ERROR_MESSAGE);
 			} else {
 				startPrivateChat(user);
@@ -175,23 +175,36 @@ public class ChatGUI extends JFrame {
 			chatDisplayPanel.revalidate();
 		}
 	}
-	
+
 	public Map<String, ChatPanel> getChatPanels() {
-        return chatPanels;
-    }
-	
+		return chatPanels;
+	}
+
 	public void receiveMessage(String[] messageParts) {
 		int senderId = MessageUtils.getSenderId(messageParts);
 		String senderUsername = MessageUtils.getSenderUserName(messageParts);
 		String messageContent = MessageUtils.getMessageContent(messageParts);
 		LocalDateTime timestamp = MessageUtils.getTimestamp(messageParts);
+		int conversationId = MessageUtils.getConversationId(messageParts);
+		Map.Entry<String, Boolean> conversationInfo = chatService.getConversationName(currentUserId, conversationId,
+				senderUsername);
 		System.out.println("Message received: " + messageContent + " from " + senderUsername);
-		if (!chatPanels.containsKey(senderUsername)) {
-			User sender = new User(senderId, senderUsername);
-			startPrivateChat(sender);
-		}
-		ChatPanel chatPanel = chatPanels.get(senderUsername);
-		chatPanel.appendMessage(senderUsername, messageContent, timestamp);
+		if (!chatPanels.containsKey(conversationInfo.getKey())) {
+			if (conversationInfo.getValue()) {
+				List<Message> messages = chatService.getConversationMessages(conversationId);
+				ChatPanel groupChat = new ChatPanel(conversationId, conversationInfo.getKey(), true, messages);
+				chatPanels.put(conversationInfo.getKey(), groupChat);
+				chatListModel.addElement(conversationInfo.getKey());
+				chatDisplayPanel.add(groupChat, conversationInfo.getKey());
+			} else {
+				ChatPanel privateChat = new ChatPanel(conversationId, senderUsername, false, null);
+				chatPanels.put(senderUsername, privateChat);
+				chatListModel.addElement(senderUsername);
+				chatDisplayPanel.add(privateChat, senderUsername);
+				ChatPanel chatPanel = chatPanels.get(conversationInfo.getKey());
+				chatPanel.appendMessage(senderUsername, messageContent, timestamp);
+			}
+		}		
 	}
 
 	protected class ChatPanel extends JPanel {
