@@ -17,183 +17,162 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-
-import chat.ChatGUI;
+import dto.User;
 
 public class AuthGUI extends JFrame {
-    private static final long serialVersionUID = 5892128998798020581L;
-    
+	private static final long serialVersionUID = 5892128998798020581L;
+
 	private AuthService authService;
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private JButton loginButton;
-    private JButton signupButton;
+	private JTextField usernameField;
+	private JPasswordField passwordField;
+	private JButton loginButton;
+	private JButton signupButton;
+	private User user;
 
-    public AuthGUI() {
-        authService = new AuthService();
-        initializeUI();
-    }
+	public AuthGUI() {
+		authService = new AuthService();
+		initializeUI();
+	}
 
-    private void initializeUI() {
-        setTitle("jChat - Login");
-        setSize(400, 300);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+	private void initializeUI() {
+		setTitle("jChat - Login");
+		setSize(400, 300);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setLocationRelativeTo(null);
 
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+		JPanel mainPanel = new JPanel();
+		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+		mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JLabel titleLabel = new JLabel("jChat", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		JLabel titleLabel = new JLabel("jChat", SwingConstants.CENTER);
+		titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+		titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JPanel usernamePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel usernameLabel = new JLabel("Username:");
-        usernameField = new JTextField(20);
-        usernamePanel.add(usernameLabel);
-        usernamePanel.add(usernameField);
+		JPanel usernamePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JLabel usernameLabel = new JLabel("Username:");
+		usernameField = new JTextField(20);
+		usernamePanel.add(usernameLabel);
+		usernamePanel.add(usernameField);
 
-        JPanel passwordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel passwordLabel = new JLabel("Password:");
-        passwordField = new JPasswordField(20);
-        passwordPanel.add(passwordLabel);
-        passwordPanel.add(passwordField);
+		JPanel passwordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JLabel passwordLabel = new JLabel("Password:");
+		passwordField = new JPasswordField(20);
+		passwordPanel.add(passwordLabel);
+		passwordPanel.add(passwordField);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        loginButton = new JButton("Login");
-        signupButton = new JButton("Sign Up");
-        buttonPanel.add(loginButton);
-        buttonPanel.add(signupButton);
+		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		loginButton = new JButton("Login");
+		signupButton = new JButton("Sign Up");
+		buttonPanel.add(loginButton);
+		buttonPanel.add(signupButton);
 
-        loginButton.addActionListener(e -> loginUser());
-        signupButton.addActionListener(e -> openSignupDialog());
+		loginButton.addActionListener(e -> loginUser());
+		signupButton.addActionListener(e -> openSignupDialog());
 
-        mainPanel.add(titleLabel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        mainPanel.add(usernamePanel);
-        mainPanel.add(passwordPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        mainPanel.add(buttonPanel);
+		mainPanel.add(titleLabel);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+		mainPanel.add(usernamePanel);
+		mainPanel.add(passwordPanel);
+		mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+		mainPanel.add(buttonPanel);
 
-        add(mainPanel);
-    }
+		add(mainPanel);
+	}
 
-    private void loginUser() {
-        String username = usernameField.getText();
-        String password = new String(passwordField.getPassword());
+	private void loginUser() {
+		String username = usernameField.getText();
+		String password = new String(passwordField.getPassword());
 
-        if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "Please enter both username and password", 
-                "Login Error", 
-                JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+		if (username.isEmpty() || password.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "Please enter both username and password", "Login Error",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
 
-        try {
-        	Integer userId = authService.authenticateUser(username, password);
-            if (userId != null) {
-                openChatWindow(username, userId);
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                    "Invalid username or password", 
-                    "Login Failed", 
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, 
-                "Login error: " + ex.getMessage(), 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
-        }
-    }
+		try {
+			Integer userId = authService.authenticateUser(username, password);
+			if (userId != null) {
+				user = new User(userId, username);
+				this.dispose();
+				this.setVisible(false);
+			} else {
+				JOptionPane.showMessageDialog(this, "Invalid username or password", "Login Failed",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this, "Login error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
 
-    private void openSignupDialog() {
-        JDialog signupDialog = new JDialog(this, "Sign Up", true);
-        signupDialog.setSize(400, 400);
-        signupDialog.setLocationRelativeTo(this);
+	private void openSignupDialog() {
+		JDialog signupDialog = new JDialog(this, "Sign Up", true);
+		signupDialog.setSize(400, 400);
+		signupDialog.setLocationRelativeTo(this);
 
-        JPanel signupPanel = new JPanel();
-        signupPanel.setLayout(new BoxLayout(signupPanel, BoxLayout.Y_AXIS));
-        signupPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        JTextField newFirstNameField = new JTextField(20);
-        JLabel newFirstNameLabel = new JLabel("First Name:");
+		JPanel signupPanel = new JPanel();
+		signupPanel.setLayout(new BoxLayout(signupPanel, BoxLayout.Y_AXIS));
+		signupPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JTextField newLastNameField = new JTextField(20);
-        JLabel newLastNameLabel = new JLabel("Last Name:");
+		JTextField newFirstNameField = new JTextField(20);
+		JLabel newFirstNameLabel = new JLabel("First Name:");
 
-        JTextField newUsernameField = new JTextField(20);
-        JLabel newUsernameLabel = new JLabel("Username:");
+		JTextField newLastNameField = new JTextField(20);
+		JLabel newLastNameLabel = new JLabel("Last Name:");
 
-        JPasswordField newPasswordField = new JPasswordField(20);
-        JLabel newPasswordLabel = new JLabel("Password:");
+		JTextField newUsernameField = new JTextField(20);
+		JLabel newUsernameLabel = new JLabel("Username:");
 
-        JButton confirmSignupButton = new JButton("Create Account");
-        confirmSignupButton.addActionListener(e -> {
-        	String firstName = newFirstNameField.getText();
-        	String lastName = newLastNameField.getText();
-            String username = newUsernameField.getText();
-            String password = new String(newPasswordField.getPassword());
+		JPasswordField newPasswordField = new JPasswordField(20);
+		JLabel newPasswordLabel = new JLabel("Password:");
 
-            if (username.isEmpty() || password.isEmpty() || firstName.isEmpty()) {
-                JOptionPane.showMessageDialog(signupDialog, 
-                    "Please fill all required fields", 
-                    "Signup Error", 
-                    JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+		JButton confirmSignupButton = new JButton("Create Account");
+		confirmSignupButton.addActionListener(e -> {
+			String firstName = newFirstNameField.getText();
+			String lastName = newLastNameField.getText();
+			String username = newUsernameField.getText();
+			String password = new String(newPasswordField.getPassword());
 
-            try {
-                if (authService.registerUser(username, password, firstName, lastName)) {
-                    JOptionPane.showMessageDialog(signupDialog, "Account Created Successfully!");
-                    signupDialog.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(signupDialog, 
-                        "Username already exists", 
-                        "Signup Failed", 
-                        JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(signupDialog, 
-                    "Signup error: " + ex.getMessage(), 
-                    "Error", 
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        });
+			if (username.isEmpty() || password.isEmpty() || firstName.isEmpty()) {
+				JOptionPane.showMessageDialog(signupDialog, "Please fill all required fields", "Signup Error",
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
 
-        signupPanel.add(newFirstNameLabel);
-        signupPanel.add(newFirstNameField);
-        signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        signupPanel.add(newLastNameLabel);
-        signupPanel.add(newLastNameField);
-        signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        signupPanel.add(newUsernameLabel);
-        signupPanel.add(newUsernameField);
-        signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        signupPanel.add(newPasswordLabel);
-        signupPanel.add(newPasswordField);
-        signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-        signupPanel.add(confirmSignupButton);
+			try {
+				if (authService.registerUser(username, password, firstName, lastName)) {
+					JOptionPane.showMessageDialog(signupDialog, "Account Created Successfully!");
+					signupDialog.dispose();
+				} else {
+					JOptionPane.showMessageDialog(signupDialog, "Username already exists", "Signup Failed",
+							JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(signupDialog, "Signup error: " + ex.getMessage(), "Error",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		});
 
-        signupDialog.add(signupPanel);
-        signupDialog.setVisible(true);
-    }
+		signupPanel.add(newFirstNameLabel);
+		signupPanel.add(newFirstNameField);
+		signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+		signupPanel.add(newLastNameLabel);
+		signupPanel.add(newLastNameField);
+		signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+		signupPanel.add(newUsernameLabel);
+		signupPanel.add(newUsernameField);
+		signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+		signupPanel.add(newPasswordLabel);
+		signupPanel.add(newPasswordField);
+		signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+		signupPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+		signupPanel.add(confirmSignupButton);
 
-    private void openChatWindow(String username, int userId) {
-        this.dispose();
-        SwingUtilities.invokeLater(() -> {
-            ChatGUI chatWindow = new ChatGUI(username, userId);
-            chatWindow.setVisible(true);
-        });
-    }
+		signupDialog.add(signupPanel);
+		signupDialog.setVisible(true);
+	}
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new AuthGUI().setVisible(true);
-        });
-    }
+	public User getUser() {
+		return user;
+	}
+
 }

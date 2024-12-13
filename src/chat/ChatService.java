@@ -1,5 +1,6 @@
 package chat;
 
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,12 +15,15 @@ import dto.Conversation;
 import dto.Message;
 import dto.User;
 import util.DatabaseUtils;
+import util.MessageUtils;
 
 public class ChatService {
 	private Connection connection;
+	private PrintWriter socketOutputWriter;
 
-	public ChatService() {
+	public ChatService(PrintWriter socketOutputWriter) {
 		try {
+			this.socketOutputWriter = socketOutputWriter;
 			this.connection = DatabaseUtils.getConnection();
 		} catch (SQLException e) {
 			throw new RuntimeException("Database connection failed", e);
@@ -60,7 +64,13 @@ public class ChatService {
 		}
 	}
 
-	public void sendMessage(int senderId, int conversationId, String messageContent) {
+	public void sendMessage(int senderId, String senderUsername, int conversationId, String messageContent) {
+		List<Integer> conversationMembers = getConversationMembers(conversationId);
+		String messageToBeSent = MessageUtils.createMessage(senderId, senderUsername, conversationId,
+				messageContent, LocalDateTime.now(), conversationMembers);
+		
+		socketOutputWriter.println(messageToBeSent);
+		
 		String sql = "INSERT INTO messages (sender_id, conversation_id, content, timestamp) " + "VALUES (?, ?, ?, ?)";
 
 		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -153,6 +163,21 @@ public class ChatService {
 		} catch (SQLException e) {
 			throw new RuntimeException("Retrieving user conversations failed", e);
 		}
+	}
+	
+	private List<Integer> getConversationMembers(int conversationId) {
+		String sql = "SELECT user_id FROM user_conversations WHERE conversation_id = ?";
+		List<Integer> members = new ArrayList<>();
+		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+			pstmt.setInt(1, conversationId);
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				members.add(rs.getInt("user_id"));
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException("Failed to get conversation members", e);
+		}
+		return members;
 	}
 
 }

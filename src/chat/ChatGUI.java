@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.io.BufferedReader;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -35,6 +37,7 @@ import javax.swing.text.StyleContext;
 import dto.Conversation;
 import dto.Message;
 import dto.User;
+import util.MessageUtils;
 
 public class ChatGUI extends JFrame {
 	private static final long serialVersionUID = 639938794175271480L;
@@ -49,10 +52,10 @@ public class ChatGUI extends JFrame {
 	private JButton findUserButton;
 	private Map<String, ChatPanel> chatPanels = new HashMap<>();
 
-	public ChatGUI(String username, int userId) {
+	public ChatGUI(String username, int userId, PrintWriter socketOutputWriter, BufferedReader socketInputReader) {
 		this.currentUserName = username;
 		this.currentUserId = userId;
-		this.chatService = new ChatService();
+		this.chatService = new ChatService(socketOutputWriter);
 		initializeUI();
 	}
 
@@ -172,8 +175,26 @@ public class ChatGUI extends JFrame {
 			chatDisplayPanel.revalidate();
 		}
 	}
+	
+	public Map<String, ChatPanel> getChatPanels() {
+        return chatPanels;
+    }
+	
+	public void receiveMessage(String[] messageParts) {
+		int senderId = MessageUtils.getSenderId(messageParts);
+		String senderUsername = MessageUtils.getSenderUserName(messageParts);
+		String messageContent = MessageUtils.getMessageContent(messageParts);
+		LocalDateTime timestamp = MessageUtils.getTimestamp(messageParts);
+		System.out.println("Message received: " + messageContent + " from " + senderUsername);
+		if (!chatPanels.containsKey(senderUsername)) {
+			User sender = new User(senderId, senderUsername);
+			startPrivateChat(sender);
+		}
+		ChatPanel chatPanel = chatPanels.get(senderUsername);
+		chatPanel.appendMessage(senderUsername, messageContent, timestamp);
+	}
 
-	private class ChatPanel extends JPanel {
+	protected class ChatPanel extends JPanel {
 		private static final long serialVersionUID = 1736199242555770092L;
 
 		private JTextPane chatArea;
@@ -248,7 +269,7 @@ public class ChatGUI extends JFrame {
 				appendMessage(currentUserName, message, LocalDateTime.now());
 				messageField.setText("");
 
-				chatService.sendMessage(currentUserId, conversationId, message);
+				chatService.sendMessage(currentUserId, currentUserName, conversationId, message);
 			}
 		}
 
