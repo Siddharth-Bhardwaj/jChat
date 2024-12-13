@@ -204,7 +204,20 @@ public class ChatGUI extends JFrame {
 				ChatPanel chatPanel = chatPanels.get(conversationInfo.getKey());
 				chatPanel.appendMessage(senderUsername, messageContent, timestamp);
 			}
-		}		
+		} else {
+			ChatPanel chatPanel = chatPanels.get(conversationInfo.getKey());
+			chatPanel.appendMessage(senderUsername, messageContent, timestamp);
+		}
+	}
+	
+	public void addGroup(String[] messageParts) {
+		int conversationId = MessageUtils.getConversationId(messageParts);
+        String conversationName = MessageUtils.getMessageContent(messageParts);
+        List<Message> messages = chatService.getConversationMessages(conversationId);
+        ChatPanel groupChat = new ChatPanel(conversationId, conversationName, true, messages);
+        chatPanels.put(conversationName, groupChat);
+        chatListModel.addElement(conversationName);
+        chatDisplayPanel.add(groupChat, conversationName);
 	}
 
 	protected class ChatPanel extends JPanel {
@@ -252,6 +265,8 @@ public class ChatGUI extends JFrame {
 							if (newUser != null) {
 								if (!chatService.addUserToConversation(newUser.getUserId(), conversationId)) {
 									errorUsers.add(user);
+								} else {
+									chatService.notifyGroupAddition(newUser.getUserId(), conversationId, chatName);
 								}
 							} else {
 								errorUsers.add(user);

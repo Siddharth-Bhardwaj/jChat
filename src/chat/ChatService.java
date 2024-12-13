@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -200,6 +201,12 @@ public class ChatService {
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to get conversation name", e);
 		}
+	}
+	
+	public void notifyGroupAddition(int userId, int conversationId, String groupName) {
+		String messageToBeSent = MessageUtils.createMessage(-1, "_", conversationId, groupName,
+				LocalDateTime.now(), new ArrayList<>(Arrays.asList(userId)));
+		socketOutputWriter.println(messageToBeSent);
 	}
 
 }

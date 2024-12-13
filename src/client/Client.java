@@ -50,7 +50,12 @@ public class Client implements Runnable {
 					String message = socketInputReader.readLine();
 					if (message != null && !message.isEmpty()) {
 						String[] messageParts = MessageUtils.parseMessage(message);
-						SwingUtilities.invokeLater(() -> chatWindow.receiveMessage(messageParts));
+						int senderId = MessageUtils.getSenderId(messageParts);
+						if (senderId > 0) {
+							SwingUtilities.invokeLater(() -> chatWindow.receiveMessage(messageParts));
+						} else {
+							SwingUtilities.invokeLater(() -> chatWindow.addGroup(messageParts));
+						}
 					}
 				}
 			} catch (IOException e) {
