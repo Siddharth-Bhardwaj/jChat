@@ -61,7 +61,14 @@ Ensure the following are installed on your system:
 
 ### Installation
 
-1. **Database Initialization**  
+1. **Sqlite Setup**
+    - In Eclipse, right-click on the project and select "Properties".
+    - Select "Java Build Path" from the sidebar menu and then select the "Libraries" tab on top.
+    - If you see the sqlite jar already present, it is already configured and you can move on to the next step.
+      Otherwise, Click on the "Add JARs" button and then select the ```sqlite-jdbc-3.34.0.jar``` jar file.
+    - Apply and close.
+   
+3. **Database Initialization**  
     Run the shell script to set up the SQLite3 database:
 
    ```bash
@@ -72,24 +79,13 @@ Ensure the following are installed on your system:
    This script creates the jChat.db database with the necessary tables:
    users, conversations, user_conversations, and messages.
 
-2. **Server Setup**
-   Start the server by running the `StartServer.java` file:
+4. **Server Setup**
+   Start the server by running `StartServer.java` present inside the src directory in Eclipse.
 
-   ```bash
-   javac StartServer.java
-   java StartServer
-   ```
+5. **Client Setup**
+   Start clients by running `StartClient.java` present inside the src directory in Eclipse.
 
-3. **Client Setup**
-   Start the client by running the `StartClient.java` file:
-
-   ```bash
-   javac StartClient.java
-   java StartClient
-   ```
-
-4. **Connect Clients**
-
+6. **Connect Clients**
    - Run multiple instances of StartClient to simulate multiple users.
    - Use the login or registration screens to authenticate and start chatting.
 
