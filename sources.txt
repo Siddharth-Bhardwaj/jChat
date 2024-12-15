@@ -1,0 +1,15 @@
+./src/dto/Message.java
+./src/dto/User.java
+./src/dto/Conversation.java
+./src/StartServer.java
+./src/chat/ChatService.java
+./src/chat/ChatGUI.java
+./src/util/DatabaseUtils.java
+./src/util/MessageUtils.java
+./src/util/PasswordUtils.java
+./src/auth/AuthGUI.java
+./src/auth/AuthService.java
+./src/server/ClientHandler.java
+./src/server/Server.java
+./src/StartClient.java
+./src/client/Client.java
