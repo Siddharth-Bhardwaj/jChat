@@ -54,7 +54,7 @@
 
 Ensure the following are installed on your system:
 
-- **Java Development Kit (JDK)**: Version 11 or higher
+- **Java Development Kit (JDK)**: 8 or higher
 - **SQLite3**: For database management
 
 ---
